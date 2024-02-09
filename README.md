@@ -5,8 +5,8 @@ This Python script crawls a specified website to find links that lead to expired
 ## Features
 
 - Crawls a given website recursively, following internal links.
-- Identifies external links and checks the domain registration status.
-- Skips subdomains and certain TLDs (e.g., `.gov`, `.edu`) to focus on potentially valuable domains.
+- Identifies external links and checks the domain registration status (expired).
+- Skips subdomains and certain TLDs (e.g., `.gov`, `.edu`)
 - Outputs expired domains to a text file for easy review.
 - Provides real-time updates on the crawling and checking process.
 
