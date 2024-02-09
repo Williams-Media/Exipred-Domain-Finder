@@ -25,3 +25,31 @@ Clone the repository to your local machine:
 ```bash
 git clone https://github.com/<your-username>/expired-domain-finder.git
 cd expired-domain-finder
+
+Install the required Python libraries:
+
+bash
+Copy code
+pip install -r requirements.txt
+The requirements.txt file should contain:
+
+Copy code
+requests
+beautifulsoup4
+whois
+fake_useragent
+termcolor
+tldextract
+Running the Script
+To run the script, use the following command in your terminal:
+
+bash
+Copy code
+python expired_domain_finder.py
+Follow the on-screen prompts to enter the starting URL for the crawl. The script will then begin the crawling and checking process, providing real-time updates and saving found expired domains to a text file.
+
+Contribution
+Contributions to the script are welcome! Please feel free to fork the repository, make your changes, and submit a pull request.
+
+License
+This project is open-source and available under the MIT License.
