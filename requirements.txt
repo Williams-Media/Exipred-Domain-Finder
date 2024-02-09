@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+whois
+fake_useragent
+termcolor
+tldextract
