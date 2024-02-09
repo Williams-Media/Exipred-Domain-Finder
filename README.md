@@ -1,4 +1,4 @@
-![Williams Media SEO Tools - Expired Domain Crawler] (https://williamsmedia.co/wp-content/uploads/expired-domain-finder.png)
+
 # Expired Domain Finder
 
 This Python script crawls a specified website to find links that lead to expired or non-registered domains. It's designed to help SEO specialists, web developers, and digital marketers identify valuable expired domains that may be related to their niche or project. This is a quick and dirty script (no judgement) 
