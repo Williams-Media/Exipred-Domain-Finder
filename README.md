@@ -56,3 +56,5 @@ Contributions to the script are welcome! Please feel free to fork the repository
 
 This project is open-source and available under the MIT License.
 
+❤️  http://williamsmedia.co/ SEO Team 
+
