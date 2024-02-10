@@ -56,5 +56,5 @@ Contributions to the script are welcome! Please feel free to fork the repository
 
 This project is open-source and available under the MIT License.
 
-❤️ <a href="https://williamsmedia.co">Williams Media SEO Team</a>
+<center>❤️ <a href="https://williamsmedia.co">Williams Media SEO Team</a></center>
 
