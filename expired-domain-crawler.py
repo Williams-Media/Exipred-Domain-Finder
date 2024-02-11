@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 import whois
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fake_useragent import UserAgent
 from termcolor import colored
 import threading
@@ -19,7 +19,7 @@ def print_welcome_message():
                "Crawler will go through the entire site looking for links that lead "
                "to expired / non-registered domains.")
     
-    wrapped_text = textwrap.fill(message, width=70)  # Adjust 'width' as per your preference
+    wrapped_text = textwrap.fill(message, width=70)
     print(wrapped_text + "\n")
 
 def get_domain_name(url):
@@ -64,6 +64,35 @@ def check_and_log_domain(domain, found_on_url, expired_domains, checked_domains,
             file.write(output_line)
         print(colored(f"Domain {domain} is expired! Saved to results file.", 'green'))
 
+def crawl_page(url, domain, external_links, visited, queue, checked_domains, expired_domains, stats, executor, output_file):
+    if url in visited:
+        return
+    visited.add(url)
+    
+    try:
+        ua = UserAgent()
+        headers = {'User-Agent': ua.random}
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        for link in soup.find_all('a', href=True):
+            href = link['href']
+            if not href.startswith(('http:', 'https:')):
+                href = urljoin(url, href)
+            parsed_domain = get_domain_name(href)
+
+            if parsed_domain and parsed_domain != domain:
+                with stats['lock']:
+                    if href not in external_links:
+                        external_links.add(href)
+                        stats['found'] += 1
+                        executor.submit(check_and_log_domain, parsed_domain, href, expired_domains, checked_domains, stats, output_file)
+            elif parsed_domain == domain and href not in visited:
+                queue.append(href)
+
+    except Exception as e:
+        print(f"Error crawling {url}: {e}")
+
 def crawl_website(start_url, executor, output_file, stats):
     domain = get_domain_name(start_url)
     external_links = set()
@@ -71,42 +100,23 @@ def crawl_website(start_url, executor, output_file, stats):
     queue = [start_url]
     checked_domains = set()
     expired_domains = []
+    future_to_url = {}
 
     while queue:
         current_url = queue.pop(0)
-        if current_url not in visited:
-            visited.add(current_url)
+        future = executor.submit(crawl_page, current_url, domain, external_links, visited, queue, checked_domains, expired_domains, stats, executor, output_file)
+        future_to_url[future] = current_url
+
+        for future in as_completed(future_to_url):
+            current_url = future_to_url[future]
             with stats['lock']:
                 stats['crawled'] += 1
-
-            try:
-                ua = UserAgent()
-                headers = {'User-Agent': ua.random}
-                response = requests.get(current_url, headers=headers, timeout=10)
-                soup = BeautifulSoup(response.text, 'html.parser')
-
-                for link in soup.find_all('a', href=True):
-                    href = link['href']
-                    if not href.startswith(('http:', 'https:')):
-                        href = urljoin(current_url, href)
-                    parsed_domain = get_domain_name(href)
-
-                    if parsed_domain and parsed_domain != domain:
-                        with stats['lock']:
-                            if href not in external_links:
-                                external_links.add(href)
-                                stats['found'] += 1
-                                executor.submit(check_and_log_domain, parsed_domain, href, expired_domains, checked_domains, stats, output_file)
-                    elif parsed_domain == domain and href not in visited:
-                        queue.append(href)
-
-            except Exception as e:
-                print(f"Error crawling {current_url}: {e}")
-
-        with stats['lock']:
-            print(f"Crawled: {stats['crawled']}, Found: {stats['found']}, Checked: {stats['checked']}, Duplicates: {stats['duplicates']}, ", end="")
-            print(colored(f"Expired: {stats['expired']}", 'green'), end="")
-            print(f" - {current_url}")
+            
+            # Print stats with the current URL
+            with stats['lock']:
+                print(f"Crawled: {stats['crawled']}, Found: {stats['found']}, Checked: {stats['checked']}, Duplicates: {stats['duplicates']}, ", end="")
+                print(colored(f"Expired: {stats['expired']}", 'green'), end="")
+                print(f" - {current_url}")
 
 def main():
     print_welcome_message()
@@ -123,7 +133,7 @@ def main():
         'lock': threading.Lock()
     }
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=50) as executor:  # Set the default thread count to 50
         crawl_website(start_url, executor, output_file, stats)
 
 if __name__ == "__main__":
